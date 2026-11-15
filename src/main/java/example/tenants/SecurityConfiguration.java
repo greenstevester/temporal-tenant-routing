@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @Profile("app")
@@ -37,6 +38,8 @@ public class SecurityConfiguration {
         return http
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Keep browser request-forgery protection enabled. The test script fetches a token.
+            // The token lives in a cookie so no server session is created.
+            .csrf(csrf -> csrf.csrfTokenRepository(new CookieCsrfTokenRepository()))
             .authorizeHttpRequests(requests -> requests.requestMatchers("/health").permitAll()
                 .anyRequest().authenticated())
             .httpBasic(Customizer.withDefaults())

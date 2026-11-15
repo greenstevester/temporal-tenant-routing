@@ -8,17 +8,18 @@ import io.temporal.api.common.v1.WorkflowExecution;
 import io.temporal.api.enums.v1.EventType;
 import io.temporal.api.enums.v1.RetryState;
 import io.temporal.client.WorkflowFailedException;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -95,18 +96,21 @@ class WebSecurityTest {
     }
 
     @Test
-    void shouldAcceptRealRequestForgeryTokenAndSessionFromTokenEndpoint() throws Exception {
+    void shouldAcceptRealRequestForgeryTokenAndCookieFromTokenEndpointWithoutServerSession()
+            throws Exception {
         var response = web.perform(get("/csrf").with(httpBasic("alice", "only-for-tests-alice")))
             .andExpect(status().isOk()).andReturn();
         String json = response.getResponse().getContentAsString();
         String token = JsonPath.read(json, "$.token");
         String header = JsonPath.read(json, "$.headerName");
-        var session = (MockHttpSession) response.getRequest().getSession(false);
+        Cookie tokenCookie = response.getResponse().getCookie("XSRF-TOKEN");
+        assertThat(response.getRequest().getSession(false)).isNull();
+        assertThat(tokenCookie).isNotNull();
         when(jobs.start("tenant-a", "job-1")).thenReturn(
             new JobService.StartedJob("tenant-a/job/job-1", "tenant-a", "tenant-a-work"));
 
         web.perform(post("/jobs").with(httpBasic("alice", "only-for-tests-alice"))
-            .session(session).header(header, token).contentType("application/json")
+            .cookie(tokenCookie).header(header, token).contentType("application/json")
             .content("{\"jobId\":\"job-1\"}")).andExpect(status().isAccepted());
         verify(jobs).start("tenant-a", "job-1");
     }
