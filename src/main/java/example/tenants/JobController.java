@@ -46,7 +46,7 @@ public class JobController {
     }
 
     @GetMapping("/jobs/{jobId}/result")
-    public ResponseEntity<?> result(Authentication authentication, @PathVariable String jobId) throws TimeoutException {
+    public ResponseEntity<?> result(Authentication authentication, @PathVariable String jobId) {
         try {
             return ResponseEntity.ok(jobs.result(resolver.resolve(authentication), jobId));
         } catch (TimeoutException error) {

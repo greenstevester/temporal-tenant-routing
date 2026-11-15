@@ -4,6 +4,10 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import com.jayway.jsonpath.JsonPath;
+import io.temporal.api.common.v1.WorkflowExecution;
+import io.temporal.api.enums.v1.EventType;
+import io.temporal.api.enums.v1.RetryState;
+import io.temporal.client.WorkflowFailedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -24,6 +30,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
@@ -108,6 +116,18 @@ class WebSecurityTest {
         when(jobs.result("tenant-b", "job-1")).thenThrow(new TimeoutException("still waiting"));
         web.perform(get("/jobs/job-1/result").with(httpBasic("bob", "only-for-tests-bob")))
             .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void shouldReturnConflictWithoutInternalDetailsWhenWorkflowFailed() throws Exception {
+        when(jobs.result("tenant-b", "job-1")).thenThrow(new WorkflowFailedException(
+            WorkflowExecution.newBuilder().setWorkflowId("tenant-b/job/job-1").build(),
+            "JobWorkflow", EventType.EVENT_TYPE_WORKFLOW_EXECUTION_FAILED, 0,
+            RetryState.RETRY_STATE_NON_RETRYABLE_FAILURE, new RuntimeException("internal detail")));
+        web.perform(get("/jobs/job-1/result").with(httpBasic("bob", "only-for-tests-bob")))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error").value("Job did not complete"))
+            .andExpect(content().string(not(containsString("internal detail"))));
     }
 
     @Test

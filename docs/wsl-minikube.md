@@ -129,8 +129,9 @@ curl -fsS --config .local/manual/alice.curl http://127.0.0.1:18080/jobs/manual-1
 ```
 
 The first response accepts the job. The result endpoint returns a waiting response until the
-job completes, usually after about thirty seconds. The `/csrf` endpoint supplies a browser
-request-forgery token: send it with its session cookie when starting a job. Authentication is
+job completes, usually after about thirty seconds. If the job failed, it returns HTTP 409 with
+`Job did not complete`. The `/csrf` endpoint supplies a browser request-forgery token: send it
+with its cookie when starting a job. Authentication is
 still required on every protected request. Use a new job identifier for each new job.
 
 Passwords are generated during deployment. Alice belongs to A and Bob to B. For Bob, use

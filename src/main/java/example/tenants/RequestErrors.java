@@ -5,6 +5,7 @@ import java.util.Map;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.temporal.client.WorkflowExecutionAlreadyStarted;
+import io.temporal.client.WorkflowFailedException;
 import io.temporal.client.WorkflowNotFoundException;
 import io.temporal.client.WorkflowServiceException;
 import org.slf4j.Logger;
@@ -27,6 +28,13 @@ public class RequestErrors {
     @ExceptionHandler(WorkflowExecutionAlreadyStarted.class)
     public ResponseEntity<?> duplicate() {
         return ResponseEntity.status(409).body(Map.of("error", "Job already exists"));
+    }
+
+    @ExceptionHandler(WorkflowFailedException.class)
+    public ResponseEntity<?> failed(WorkflowFailedException error) {
+        LOG.warn("Job did not complete workflow={} close={}", error.getExecution().getWorkflowId(),
+            error.getWorkflowCloseEventType(), error);
+        return ResponseEntity.status(409).body(Map.of("error", "Job did not complete"));
     }
 
     @ExceptionHandler(WorkflowNotFoundException.class)

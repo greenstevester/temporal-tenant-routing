@@ -55,10 +55,17 @@ start_job() {
 }
 
 wait_result() {
-  local user=$1 job=$2 output="$EVIDENCE/$1-$2-result.json"
+  local user=$1 job=$2 output="$EVIDENCE/$1-$2-result.json" code
   for _attempt in $(seq 1 150); do
-    request "$user" "/jobs/$job/result" > "$output"
-    if jq -e '.executions | type == "array"' "$output" >/dev/null; then return; fi
+    code=$(curl -sS --max-time 15 --config "$PRIVATE/$user.curl" -o "$output" \
+      -w '%{http_code}' "$BASE/jobs/$job/result")
+    case "$code" in
+      200) jq -e '.executions | type == "array"' "$output" >/dev/null && return ;;
+      202) ;;
+      *)
+        echo "Job $user/$job failed: HTTP $code $(cat "$output"); evidence: $EVIDENCE" >&2
+        return 1 ;;
+    esac
     sleep 1
   done
   echo "Timed out waiting for $user/$job; evidence: $EVIDENCE" >&2

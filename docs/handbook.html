@@ -835,9 +835,10 @@ minikube networking</a>.</p>
 <span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fsS</span> <span class="at">--config</span> .local/manual/alice.curl http://127.0.0.1:18080/jobs/manual-1/result</span></code></pre></div>
 <p>The first response accepts the job. The result endpoint returns a
 waiting response until the job completes, usually after about thirty
-seconds. The <code>/csrf</code> endpoint supplies a browser
-request-forgery token: send it with its session cookie when starting a
-job. Authentication is still required on every protected request. Use a
+seconds. If the job failed, it returns HTTP 409 with
+<code>Job did not complete</code>. The <code>/csrf</code> endpoint
+supplies a browser request-forgery token: send it with its cookie when
+starting a job. Authentication is still required on every protected request. Use a
 new job identifier for each new job.</p>
 <p>Passwords are generated during deployment. Alice belongs to A and Bob
 to B. For Bob, use <code>.local/bob-password</code> and username
