@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.14" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Temporal tenant routing — Java 21</title>
+  <style>
+
+span.smallcaps{font-variant: small-caps;}
+em, em em em, em em em em em {
+font-style: italic;
+}
+em em, em em em em {
+font-style: normal;
+}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+@media print {
+html {
+color-scheme: light only;
+}
+html, body, pre, code {
+background-color: transparent;
+}
+body, a, a:visited, blockquote {
+color: black;
+}
+pre, code {
+padding: 0;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+} </style>
+  <style type="text/css">body {
+max-width: 78rem;
+margin: 2rem auto;
+padding: 0 1.5rem;
+color: #17263b;
+background: #ffffff;
+font: 17px/1.65 system-ui, sans-serif;
+}
+h1, h2, h3 { line-height: 1.2; color: #163b68; }
+h1 { margin-top: 3rem; padding-top: 1rem; border-top: 2px solid #dce6f2; }
+a { color: #075da8; text-underline-offset: 0.18em; }
+pre { overflow-x: auto; padding: 1.25rem; background: #eff4f9; border-radius: 0.4rem; }
+code { font-family: ui-monospace, monospace; font-size: 0.9em; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 2rem; }
+td, th { border: 1px solid #cad8e6; text-align: left; padding: 0.65rem; vertical-align: top; }
+th { background: #eff4f9; }
+nav { background: #f3f7fa; padding: 1rem 1.5rem; }
+@media print {
+body { max-width: none; font-size: 10pt; }
+pre { white-space: pre-wrap; }
+h1 { break-before: page; }
+tr { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Temporal tenant routing — Java 21</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#follow-tenant-as-work" id="toc-follow-tenant-as-work">Follow Tenant A’s work</a>
+<ul>
+<li><a href="#what-each-namespace-separates" id="toc-what-each-namespace-separates">1. What each namespace
+separates</a></li>
+<li><a href="#how-work-reaches-a-worker" id="toc-how-work-reaches-a-worker">2. How work reaches a worker</a></li>
+<li><a href="#three-different-meanings-of-affinity" id="toc-three-different-meanings-of-affinity">3. Three different
+meanings of affinity</a></li>
+<li><a href="#compare-the-two-designs" id="toc-compare-the-two-designs">4. Compare the two designs</a></li>
+<li><a href="#concrete-configuration" id="toc-concrete-configuration">5.
+Concrete configuration</a></li>
+<li><a href="#crashes-replacement-and-isolation" id="toc-crashes-replacement-and-isolation">6. Crashes, replacement, and
+isolation</a></li>
+<li><a href="#prove-the-behavior" id="toc-prove-the-behavior">7. Prove
+the behavior</a></li>
+</ul></li>
+<li><a href="#run-with-minikube-on-windows-subsystem-for-linux-2" id="toc-run-with-minikube-on-windows-subsystem-for-linux-2">Run with
+minikube on Windows Subsystem for Linux 2</a>
+<ul>
+<li><a href="#prepare-the-tools" id="toc-prepare-the-tools">Prepare the
+tools</a></li>
+<li><a href="#start-the-local-demonstration" id="toc-start-the-local-demonstration">Start the local
+demonstration</a></li>
+<li><a href="#inspect-a-running-demonstration" id="toc-inspect-a-running-demonstration">Inspect a running
+demonstration</a></li>
+<li><a href="#troubleshooting-and-cleanup" id="toc-troubleshooting-and-cleanup">Troubleshooting and
+cleanup</a></li>
+</ul></li>
+<li><a href="#test-access-restrictions-with-temporal-cloud" id="toc-test-access-restrictions-with-temporal-cloud">Test access
+restrictions with Temporal Cloud</a>
+<ul>
+<li><a href="#give-each-process-only-its-required-access" id="toc-give-each-process-only-its-required-access">Give each process
+only its required access</a></li>
+<li><a href="#run-the-secured-exercise" id="toc-run-the-secured-exercise">Run the secured exercise</a></li>
+</ul></li>
+<li><a href="#what-keeps-the-tenants-separate" id="toc-what-keeps-the-tenants-separate">What keeps the tenants
+separate</a>
+<ul>
+<li><a href="#controls-in-the-example" id="toc-controls-in-the-example">Controls in the example</a></li>
+<li><a href="#a-compromised-worker" id="toc-a-compromised-worker">A
+compromised worker</a></li>
+<li><a href="#what-the-supplied-check-can-establish" id="toc-what-the-supplied-check-can-establish">What the supplied check
+can establish</a></li>
+</ul></li>
+<li><a href="#tests-and-expected-evidence" id="toc-tests-and-expected-evidence">Tests and expected evidence</a>
+<ul>
+<li><a href="#java-tests-without-a-running-temporal-service" id="toc-java-tests-without-a-running-temporal-service">Java tests
+without a running Temporal service</a></li>
+<li><a href="#the-two-tenant-minikube-test" id="toc-the-two-tenant-minikube-test">The two-tenant minikube
+test</a></li>
+<li><a href="#interpreting-the-result" id="toc-interpreting-the-result">Interpreting the result</a></li>
+</ul></li>
+<li><a href="#using-a-self-hosted-temporal-service" id="toc-using-a-self-hosted-temporal-service">Using a self-hosted
+Temporal service</a></li>
+<li><a href="#official-sources-and-version-choices" id="toc-official-sources-and-version-choices">Official sources and
+version choices</a>
+<ul>
+<li><a href="#temporal" id="toc-temporal">Temporal</a></li>
+<li><a href="#kubernetes-windowslinux-and-minikube" id="toc-kubernetes-windowslinux-and-minikube">Kubernetes, Windows/Linux,
+and minikube</a></li>
+<li><a href="#pinned-project-versions" id="toc-pinned-project-versions">Pinned project versions</a></li>
+</ul></li>
+<li><a href="#delivery-verification" id="toc-delivery-verification">Delivery verification</a>
+<ul>
+<li><a href="#what-i-cheated-on" id="toc-what-i-cheated-on">What I
+cheated on</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="follow-tenant-as-work">Follow Tenant A’s work</h1>
+<pre class="text"><code>User Alice -&gt; Spring application -&gt; Temporal namespace tenant-a
+                                         |
+                                 queue tenant-a-work
+                                         ^
+                                         | polled by
+                                 Kubernetes tenant-a
+                                 Spring Boot workers
+
+User Bob   -&gt; Spring application -&gt; Temporal namespace tenant-b
+                                         |
+                                 queue tenant-b-work
+                                         ^
+                                         | polled by
+                                 Kubernetes tenant-b
+                                 Spring Boot workers</code></pre>
+<p>This is the local naming scheme. In Temporal Cloud, the full
+namespace includes your account identifier, for example
+<code>tenant-a.acme123</code>. Kubernetes still calls its namespace
+<code>tenant-a</code>. Both Temporal namespaces belong to the same
+shared Temporal service.</p>
+<h2 id="what-each-namespace-separates">1. What each namespace
+separates</h2>
+<p>A tenant is one customer whose work must stay separate from another
+customer’s work. A Kubernetes cluster is a group of machines managed
+together. A node is one of those machines. A pod is Kubernetes’ running
+unit for containers. A Deployment maintains the requested number of pods
+and replaces them when needed. A Secret is a Kubernetes object for
+credentials or other confidential values. A Service gives pods a stable
+network address.</p>
+<p>A Kubernetes namespace groups named resources. Both tenants can have
+a Deployment named <code>temporal-worker</code> because each Deployment
+is in a different namespace. Secrets, Services, and pods are also
+namespaced. Nodes and some administrative resources belong to the whole
+cluster. A namespace alone does not prevent network traffic, reserve a
+machine, or forbid users from reading another namespace. Add
+permissions, network rules, and resource limits. <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/">Kubernetes
+namespaces</a>, <a href="https://kubernetes.io/docs/concepts/security/multi-tenancy/">multi-tenancy</a>.</p>
+<p>A workflow is your Java code for coordinating a job. A workflow
+execution is one running or completed instance of that code. Temporal
+records its progress as an event history. An activity is a piece of work
+called by a workflow, such as charging a card or calling another
+service. Workers are your application processes that run workflow and
+activity code. <a href="https://docs.temporal.io/workflow-execution">Workflow
+executions</a>, <a href="https://docs.temporal.io/activity-definition">activities</a>.</p>
+<p>Authentication checks a caller’s identity; authorization checks its
+permissions. A credential, such as a secret key, lets the caller prove
+its identity.</p>
+<p>A Temporal namespace groups workflow executions, task queues, and
+namespace settings such as history retention. A workflow identifier
+belongs to that Temporal namespace. Authorization can restrict a
+credential to a namespace when the service is configured to enforce it.
+<a href="https://docs.temporal.io/namespaces">Temporal
+namespaces</a>.</p>
+<pre class="text"><code>Kubernetes namespace                     Temporal namespace
+pods, Secrets, Deployments               workflows, history, queues
+        |                                         |
+        +----- configuration connects these ------+
+                   no automatic relationship</code></pre>
+<p>Naming both <code>tenant-a</code> makes configuration easier to
+inspect. Temporal does not discover that name from Kubernetes or check
+where a pod lives. Our manifests pass the Temporal namespace explicitly.
+Our security design separately restricts who can use it.</p>
+<h2 id="how-work-reaches-a-worker">2. How work reaches a worker</h2>
+<p>A task is a request from Temporal for a worker to do something. A
+workflow task asks the worker to run workflow code until it decides what
+should happen next. An activity task asks it to run an activity. A task
+queue is the named place workers ask Temporal for those tasks. Polling
+means asking for work and waiting for a response. Queues are created on
+demand; this project has no queue-creation command. Workflow and
+activity queues are separate task kinds even when their names match. <a href="https://docs.temporal.io/tasks">Tasks</a>, <a href="https://docs.temporal.io/task-queue">task queues</a>.</p>
+<p>For Alice’s request:</p>
+<pre class="text"><code>Alice                   Spring application         Temporal             A worker
+  | login + POST /jobs         |                      |                    |
+  |--------------------------&gt;|                      |                    |
+  |                    authenticate Alice            |                    |
+  |                    resolve tenant-a              |                    |
+  |                    select A client               |                    |
+  |                    namespace=tenant-a            |                    |
+  |                    queue=tenant-a-work           |                    |
+  |                            |--- start workflow --&gt;|                    |
+  |&lt;---- accepted + job id -----|                      |&lt;-- poll workflow --|
+  |                                                   |--- workflow task -&gt;|
+  |                                                   |&lt;-- schedule step --|
+  |                                                   |&lt;-- poll activity --|
+  |                                                   |--- activity task -&gt;|
+  |                                                   |&lt;-- activity result-|
+  |                                                   |                    |
+  |                          another workflow task advances the workflow   |</code></pre>
+<p>The application chooses the Temporal namespace through
+<code>WorkflowClientOptions</code>. It chooses the workflow queue
+through <code>WorkflowOptions</code>. The workflow chooses the activity
+queue through <code>ActivityOptions</code>. The worker’s client selects
+its namespace; <code>newWorker(queue)</code> selects the queue it polls.
+Both ends must agree. The service sends tasks over the worker’s existing
+polling connection; it does not connect to a Kubernetes Service for that
+worker. <a href="https://docs.temporal.io/develop/java/client/temporal-client">Java
+client</a>, <a href="https://docs.temporal.io/develop/java/core-application">Java
+workers</a>.</p>
+<p>In this project, both task kinds use <code>tenant-a-work</code> for A
+and <code>tenant-b-work</code> for B. Activities explicitly copy the
+workflow’s queue. The workflow cannot choose another Temporal namespace
+through activity options. An activity could create another client in its
+own code, so its credential must also prevent unauthorized access.</p>
+<p>The task routing address is the Temporal namespace, task-queue name,
+and task kind. A queue name by itself does not identify a tenant
+globally. Workflow identifiers are helpful for auditing, but their
+spelling does not enforce tenant isolation.</p>
+<h2 id="three-different-meanings-of-affinity">3. Three different
+meanings of affinity</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>Meaning</th>
+<th>What it guarantees</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tenant-specific routing</td>
+<td>A’s tasks use A’s namespace and queues; A’s workers poll those
+queues.</td>
+<td>Correctly configured workers receive only their assigned routes.
+Server permissions must reject unauthorized polling.</td>
+</tr>
+<tr>
+<td>Temporal sticky execution</td>
+<td>Temporal tries to send later workflow tasks to the same worker
+because it has workflow state cached in memory.</td>
+<td>A performance preference with fallback. It gives no lasting
+ownership of a workflow to a pod.</td>
+</tr>
+<tr>
+<td>Kubernetes node affinity</td>
+<td>Rules that choose which nodes may run a pod.</td>
+<td>Required rules constrain scheduling; preferred rules express a
+preference. They do not choose Temporal tasks.</td>
+</tr>
+<tr>
+<td>Kubernetes pod affinity or anti-affinity</td>
+<td>Rules to place pods near, or apart from, other pods.</td>
+<td>Placement constraints or preferences, not Temporal access
+permissions.</td>
+</tr>
+</tbody>
+</table>
+<p>Sticky execution applies to workflow tasks. If the preferred worker
+disappears or the cached state is unavailable, another eligible worker
+can rebuild state from history. This is called replay. The sticky
+queue’s schedule-to-start timeout controls fallback; the documented
+default is five seconds. This does not redirect work to a different
+tenant’s normal queue. <a href="https://docs.temporal.io/sticky-execution">Sticky
+execution</a>.</p>
+<pre class="text"><code>Normal A queue -&gt; A pod 1 -&gt; cached workflow state
+                     X      pod crashes
+Normal A queue -&gt; A pod 2 -&gt; replay history -&gt; continue</code></pre>
+<p>Kubernetes affinity can place A on dedicated nodes or spread A’s
+replicas across nodes. Required scheduling rules are stronger than
+preferences, but the usual <code>IgnoredDuringExecution</code> rules do
+not continuously evict a running pod after labels change. Dedicated
+nodes also require protected labels and controls that stop other tenants
+scheduling there. The supplied single-node minikube example uses no
+affinity rules. <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/">Assigning
+pods to nodes</a>.</p>
+<p>Your requirement needs tenant routing, namespace-specific
+credentials, and protection of those credentials. Sticky execution helps
+performance. Affinity may help machine placement or availability once
+you have multiple nodes.</p>
+<h2 id="compare-the-two-designs">4. Compare the two designs</h2>
+<pre class="text"><code>Shared Temporal namespace                Separate Temporal namespaces
++---------------------------+            +------------+ +------------+
+| namespace shared          |            | tenant-a   | | tenant-b   |
+| A queue       B queue     |            | A queue    | | B queue    |
++----^-------------^--------+            +-----^------+ +-----^------+
+     |             |                          |              |
+  A workers     B workers                  A workers      B workers</code></pre>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concern</th>
+<th>One namespace, tenant queues</th>
+<th>Namespace per tenant</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Routing</td>
+<td>Separate queue names route both task kinds.</td>
+<td>Separate namespace and queue settings route both task kinds.</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>Standard namespace-wide permissions cover both queues. Queue naming
+is a convention.</td>
+<td>Namespace permissions can deny B access to A, including queues and
+history.</td>
+</tr>
+<tr>
+<td>Credentials</td>
+<td>Different keys improve rotation and auditing, but keys with the same
+namespace permission still have the same reach.</td>
+<td>Each worker key belongs only to its own namespace.</td>
+</tr>
+<tr>
+<td>Operations</td>
+<td>Fewer namespace settings and connections to manage. Still maintain
+per-tenant worker deployments.</td>
+<td>More namespaces, accounts, connections, monitoring, retention
+settings, and onboarding work.</td>
+</tr>
+<tr>
+<td>Worker scaling</td>
+<td>Increase A replicas independently; B has its own queue and
+workers.</td>
+<td>Also scale independently; namespace capacity can be managed
+separately.</td>
+</tr>
+<tr>
+<td>Busy tenant</td>
+<td>Separate workers prevent A consuming B’s worker slots.
+Namespace-wide limits and shared server capacity can still affect
+B.</td>
+<td>Cloud provides per-namespace limits and capacity controls. Shared
+infrastructure, account dependencies, and the shared application still
+need capacity planning.</td>
+</tr>
+<tr>
+<td>Visibility</td>
+<td>Workflows share a namespace; application filters alone are
+insufficient access restrictions.</td>
+<td>Credentials can separate access to each namespace’s history and
+visibility.</td>
+</tr>
+</tbody>
+</table>
+<p>For two tenants with this security requirement, start with one
+Temporal namespace per tenant. This is a recommendation for your
+constraints. A shared queue with fairness can suit other applications,
+but it allows shared workers and does not meet your dedicated-worker
+requirement. <a href="https://docs.temporal.io/best-practices/multi-tenant-patterns">Temporal
+multi-tenant patterns</a>, <a href="https://docs.temporal.io/evaluate/cloud/security">Cloud
+security</a>.</p>
+<p>Temporal Cloud’s built-in <code>Write</code> permission permits both
+starting workflows and running workers throughout the assigned
+namespace. It is not a queue-specific permission. Current custom-role
+documentation describes narrower actions on resources such as namespaces
+and marks the feature pre-release; it does not make our queue names
+access restrictions. <a href="https://docs.temporal.io/cloud/manage-access/roles-and-permissions">Roles
+and permissions</a>, <a href="https://docs.temporal.io/cloud/manage-access/custom-roles">custom
+roles</a>.</p>
+<p>On a self-hosted service, separate namespaces need an authorization
+policy. The default authorizer allows requests. A custom policy is
+possible, but enforcing queue-specific access must cover all operations,
+including history reads and task completion, not only polling. The
+supplied project uses namespace separation. <a href="#using-a-self-hosted-temporal-service">Self-hosted security</a>.</p>
+<h2 id="concrete-configuration">5. Concrete configuration</h2>
+<p>Assumptions: you control the Spring application and deployment
+configuration; cluster and Temporal administrators are trusted; workers
+use compatible workflow code; tenants cannot create arbitrary pods in
+each other’s namespaces. The secured example uses Temporal Cloud
+credentials. Local mode deliberately removes Temporal authorization for
+a quick learning run.</p>
+<pre class="text"><code>Kubernetes cluster                         Shared Temporal Cloud service
++--------------------------------+         +---------------------------------+
+| application                    |         | tenant-a.acme123                |
+| Spring Boot deployment         |--------&gt;| tenant-a-work                   |
+| A client + B client            |         | workflow tasks + activity tasks |
+| separate A/B application keys  |---+     +----------------^----------------+
++--------------------------------+   |                      |
+                                     |                  polls with A key
++--------------------------------+   |                      |
+| tenant-a                       |--------------------------+
+| temporal-worker deployment x2  |   |
+| A worker key only              |   |
++--------------------------------+   |     +---------------------------------+
+                                     +----&gt;| tenant-b.acme123                |
++--------------------------------+         | tenant-b-work                   |
+| tenant-b                       |--------&gt;| workflow tasks + activity tasks |
+| temporal-worker deployment x2  | polls   +---------------------------------+
+| B worker key only              | with B key
++--------------------------------+</code></pre>
+<p><code>acme123</code> is an example account identifier. Use the
+complete namespace and endpoint shown by your Cloud account. In local
+mode, drop the <code>.acme123</code> suffix and use the shared
+development server address
+<code>temporal.temporal-system.svc.cluster.local:7233</code>.</p>
+<p>The authenticated identity determines the route:</p>
+<pre class="text"><code>verified Alice login -&gt; server authority tenant:tenant-a -&gt; fixed A client and A queue
+verified Bob login   -&gt; server authority tenant:tenant-b -&gt; fixed B client and B queue
+request X-Tenant-Id  -&gt; ignored
+request JSON        -&gt; jobId; routing fields are never consulted</code></pre>
+<p>This example has two password-authenticated demonstration users. A
+production login system should verify its signed login token, its
+issuer, intended recipient, and tenant membership before constructing
+the same trusted authority. If a user belongs to several tenants,
+validate their selected tenant against that membership. Do not
+concatenate a request header into a queue name.</p>
+<p>The Spring configuration uses ordinary beans and the Temporal Java
+library, so the choices are visible. The official Spring Boot
+integration also exists; this project does not combine automatic worker
+registration with these explicit beans. <a href="https://docs.temporal.io/develop/java/integrations/spring-boot-integration">Spring
+Boot integration</a>.</p>
+<p>Illustrative extracts, matching the complete source:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">// AppConfiguration: a client is fixed to one Temporal namespace.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>WorkflowClient a <span class="op">=</span> WorkflowClient<span class="op">.</span><span class="fu">newInstance</span><span class="op">(</span>aConnection<span class="op">,</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    WorkflowClientOptions<span class="op">.</span><span class="fu">newBuilder</span><span class="op">().</span><span class="fu">setNamespace</span><span class="op">(</span><span class="st">&quot;tenant-a.acme123&quot;</span><span class="op">).</span><span class="fu">build</span><span class="op">());</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">// JobService: the server&#39;s trusted tenant mapping chooses this queue.</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>WorkflowOptions options <span class="op">=</span> WorkflowOptions<span class="op">.</span><span class="fu">newBuilder</span><span class="op">()</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">setWorkflowId</span><span class="op">(</span><span class="st">&quot;tenant-a/job/example-1&quot;</span><span class="op">)</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">setTaskQueue</span><span class="op">(</span><span class="st">&quot;tenant-a-work&quot;</span><span class="op">)</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">build</span><span class="op">();</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="co">// JobWorkflowImpl: both task kinds stay on the same tenant route.</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>ActivityOptions activityOptions <span class="op">=</span> ActivityOptions<span class="op">.</span><span class="fu">newBuilder</span><span class="op">()</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">setTaskQueue</span><span class="op">(</span>Workflow<span class="op">.</span><span class="fu">getInfo</span><span class="op">().</span><span class="fu">getTaskQueue</span><span class="op">())</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">setStartToCloseTimeout</span><span class="op">(</span><span class="bu">Duration</span><span class="op">.</span><span class="fu">ofSeconds</span><span class="op">(</span><span class="dv">30</span><span class="op">))</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">setHeartbeatTimeout</span><span class="op">(</span><span class="bu">Duration</span><span class="op">.</span><span class="fu">ofSeconds</span><span class="op">(</span><span class="dv">5</span><span class="op">))</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">setDisableEagerExecution</span><span class="op">(</span><span class="kw">true</span><span class="op">)</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">build</span><span class="op">();</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="co">// WorkerConfiguration: this worker polls only this client&#39;s namespace and queue.</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>WorkerFactory factory <span class="op">=</span> WorkerFactory<span class="op">.</span><span class="fu">newInstance</span><span class="op">(</span>a<span class="op">);</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>Worker worker <span class="op">=</span> factory<span class="op">.</span><span class="fu">newWorker</span><span class="op">(</span><span class="st">&quot;tenant-a-work&quot;</span><span class="op">);</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>worker<span class="op">.</span><span class="fu">registerWorkflowImplementationTypes</span><span class="op">(</span>JobWorkflowImpl<span class="op">.</span><span class="fu">class</span><span class="op">);</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>worker<span class="op">.</span><span class="fu">registerActivitiesImplementations</span><span class="op">(</span>activities<span class="op">);</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>factory<span class="op">.</span><span class="fu">start</span><span class="op">();</span></span></code></pre></div>
+<p>Cloud connections use <code>setEnableHttps(true)</code> and
+<code>addApiKey(() -&gt; key)</code> on
+<code>WorkflowServiceStubsOptions</code>. The key identifies the caller;
+the namespace option selects the requested namespace. Both must be
+correct. Local mode refuses a nonempty key so it cannot send Cloud
+credentials over its unencrypted connection. <a href="https://docs.temporal.io/develop/java/client/temporal-client">Java
+connection configuration</a>.</p>
+<p>The worker Deployment passes the matching settings:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">metadata</span><span class="kw">:</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">name</span><span class="kw">:</span><span class="at"> temporal-worker</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">namespace</span><span class="kw">:</span><span class="at"> tenant-a</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Inside the worker container&#39;s env list:</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">- </span><span class="fu">name</span><span class="kw">:</span><span class="at"> TENANT_ID</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">value</span><span class="kw">:</span><span class="at"> tenant-a</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">- </span><span class="fu">name</span><span class="kw">:</span><span class="at"> TEMPORAL_NAMESPACE</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">value</span><span class="kw">:</span><span class="at"> tenant-a.acme123</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">- </span><span class="fu">name</span><span class="kw">:</span><span class="at"> TEMPORAL_TASK_QUEUE</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">value</span><span class="kw">:</span><span class="at"> tenant-a-work</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">- </span><span class="fu">name</span><span class="kw">:</span><span class="at"> TEMPORAL_TARGET</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">value</span><span class="kw">:</span><span class="at"> tenant-a.acme123.tmprl.cloud:7233</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">- </span><span class="fu">name</span><span class="kw">:</span><span class="at"> TEMPORAL_API_KEY</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">valueFrom</span><span class="kw">:</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">secretKeyRef</span><span class="kw">:</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">name</span><span class="kw">:</span><span class="at"> temporal-worker-credentials</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">key</span><span class="kw">:</span><span class="at"> api-key</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">- </span><span class="fu">name</span><span class="kw">:</span><span class="at"> POD_NAMESPACE</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">valueFrom</span><span class="kw">:</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">fieldRef</span><span class="kw">:</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">fieldPath</span><span class="kw">:</span><span class="at"> metadata.namespace</span></span></code></pre></div>
+<p>That is an extract, not a complete Deployment.
+<code>k8s/worker.yaml.tpl</code> is the complete template. The scripts
+render it once for A and once for B. Kubernetes supplies pod name and
+namespace from pod metadata, which the worker checks and records. <a href="https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/">Pod
+metadata in environment variables</a>.</p>
+<h2 id="crashes-replacement-and-isolation">6. Crashes, replacement, and
+isolation</h2>
+<p>Replay means rerunning workflow code against its recorded events to
+reconstruct where it had reached. Completed activity results come from
+history. Replay does not call those completed activities again. Workflow
+code must be deterministic: the same recorded events must lead to the
+same commands. Use Temporal’s timers and workflow methods instead of
+ordinary sleeping, network calls, or random values in workflow code. <a href="https://docs.temporal.io/workflow-definition">Workflow
+definitions</a>, <a href="https://docs.temporal.io/workflow-execution/event">event
+history</a>.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Event</th>
+<th>Expected behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One A worker crashes during a workflow task</td>
+<td>A task is retried; another eligible A worker replays history and
+continues. Sticky state is expendable.</td>
+</tr>
+<tr>
+<td>A worker crashes during an activity</td>
+<td>Temporal detects missed heartbeats or an attempt timeout and retries
+according to the activity policy.</td>
+</tr>
+<tr>
+<td>An activity finishes its external effect but its completion is
+lost</td>
+<td>The activity may run again. Use a stable operation identifier so the
+external system can reject duplicate effects.</td>
+</tr>
+<tr>
+<td>Every A worker stops</td>
+<td>A’s work waits. B’s correctly configured workers keep polling B.
+Timeouts and retry limits still apply.</td>
+</tr>
+<tr>
+<td>Replacement A workers start</td>
+<td>They poll the same namespace and queue, register the same types,
+replay compatible workflow history, and continue. No pod-local workflow
+backup is required.</td>
+</tr>
+</tbody>
+</table>
+<p>A heartbeat is an activity’s periodic report that it is still
+working. This example sends one each second during its simulated
+ten-second activity. It allows five seconds without a heartbeat, thirty
+seconds per attempt, at most twenty attempts, and ten minutes overall
+for each activity. A longer outage can therefore fail an activity.
+Recovery is governed by the configured limits, rather than a promise to
+retry forever. <a href="https://docs.temporal.io/encyclopedia/detecting-activity-failures">Activity
+failure detection</a>.</p>
+<p>Any compatible, authorized A worker can continue. Compatibility
+includes understanding the workflow’s recorded history and registering
+the required workflow/activity types. The example does not use worker
+versioning. Real deployments need a code compatibility strategy before
+changing long-running workflows.</p>
+<p>The included activities only log and wait; there is no payment or
+database write. Disabling eager activity execution makes the ordinary
+activity-polling path visible. No local activities are used. Local
+activities would run in the workflow worker process and need separate
+consideration when designing worker placement.</p>
+<p>A wrongly configured worker is stopped by our startup checks. A
+malicious worker can remove those checks. The enforceable restriction is
+its credential: Temporal must deny B’s credential in A’s namespace.
+Kubernetes must stop B reading A’s Secret or creating a pod that mounts
+it. A stolen A credential can be used outside A’s Kubernetes namespace
+unless additional controls prevent that. Temporal credentials alone do
+not prove physical pod location. <a href="#what-keeps-the-tenants-separate">Isolation
+controls</a>.</p>
+<h2 id="prove-the-behavior">7. Prove the behavior</h2>
+<pre class="text"><code>Start A and B -&gt; kill busy A pod -&gt; A retries on another A pod
+                      |                     |
+                      +----- B continues ---+
+
+Stop all A -&gt; start A and B jobs -&gt; B completes; A remains waiting
+                                      |
+Restart A ----------------------------+-&gt; original A job completes
+
+B credential -&gt; A workflow poll  -&gt; denied
+             -&gt; A activity poll  -&gt; denied
+             -&gt; A history read   -&gt; denied</code></pre>
+<p>Run <code>scripts/test-minikube.sh</code> after deploying the chosen
+mode. It checks workflow-task worker identities in Temporal history,
+activity location records, and Kubernetes pod records. The access probe
+first proves B’s credential works for B; connection failure or timeout
+against A does not count as a security pass. Local mode instead confirms
+the expected lack of Temporal authorization. See <a href="#tests-and-expected-evidence">test steps and evidence</a> and the <a href="#run-with-minikube-on-windows-subsystem-for-linux-2">Windows/Linux setup</a>.</p>
+<h1 id="run-with-minikube-on-windows-subsystem-for-linux-2">Run with
+minikube on Windows Subsystem for Linux 2</h1>
+<p>Run the project commands inside your Linux terminal. The scripts use
+Bash, Linux paths, and Linux container images. Windows Subsystem for
+Linux 2 runs that Linux environment on Windows.</p>
+<h2 id="prepare-the-tools">Prepare the tools</h2>
+<p>Use a Linux distribution such as Ubuntu with either Docker Engine
+installed inside it or Docker Desktop’s integration enabled for that
+distribution. Both are supported by minikube. Confirm
+<code>docker info</code> works as your regular Linux user before
+starting minikube. <a href="https://minikube.sigs.k8s.io/docs/tutorials/wsl_docker_driver/">Official
+Windows/Linux setup</a>.</p>
+<p>Install these tools in the Linux environment:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Project baseline</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Java development kit</td>
+<td>Temurin 21.0.13+9; Java major version 21 is required</td>
+<td><code>java -version</code></td>
+</tr>
+<tr>
+<td>Maven</td>
+<td>3.9.9 or later; delivery tested with 3.9.9</td>
+<td><code>mvn -version</code></td>
+</tr>
+<tr>
+<td>minikube</td>
+<td>1.39.0</td>
+<td><code>minikube version</code></td>
+</tr>
+<tr>
+<td>kubectl</td>
+<td>1.37.2</td>
+<td><code>kubectl version --client</code></td>
+</tr>
+<tr>
+<td>Docker</td>
+<td>Working Linux container engine</td>
+<td><code>docker info</code></td>
+</tr>
+<tr>
+<td>Shell utilities</td>
+<td>Bash, curl, jq, openssl, shasum, unzip</td>
+<td><code>command -v bash curl jq openssl shasum unzip</code></td>
+</tr>
+<tr>
+<td>ShellCheck, optional</td>
+<td>Checks scripts for common mistakes</td>
+<td><code>shellcheck --version</code></td>
+</tr>
+</tbody>
+</table>
+<p>Use the official <a href="https://adoptium.net/temurin/releases/?version=21">Temurin
+downloads</a>, <a href="https://maven.apache.org/download.cgi">Maven
+downloads</a>, <a href="https://github.com/kubernetes/minikube/releases">minikube
+releases</a>, and <a href="https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/">kubectl
+installation guide</a>. For a reproducible first run, choose the pinned
+tool versions above. Package-manager Java installations must still
+resolve to Java 21. Maven prints the Java installation it uses; check
+that line as well as <code>java -version</code>. No Maven wrapper or
+tool installer is bundled.</p>
+<p>The start script requests four processor cores and six gigabytes of
+memory for minikube. Leave memory for Windows, Docker, and Maven too.
+Use a machine with roughly twelve gigabytes available to this work.
+Downloading dependencies and images requires network access.</p>
+<p>Keep the extracted project under your Linux home directory, for
+example <code>~/projects/temporal-tenant-routing</code>. Working under
+<code>/mnt/c</code> can make Linux builds slower. <a href="https://learn.microsoft.com/en-us/windows/wsl/setup/environment">Microsoft’s
+filesystem guidance</a>.</p>
+<p>If your extraction tool removed executable permissions, restore
+them:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> +x scripts/<span class="pp">*</span>.sh</span></code></pre></div>
+<h2 id="start-the-local-demonstration">Start the local
+demonstration</h2>
+<p>From the project directory:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/start-minikube.sh</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/build-minikube.sh</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/deploy-minikube.sh</span> local</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/test-minikube.sh</span> local</span></code></pre></div>
+<p>The start script creates profile <code>temporal-tenants</code> with
+Kubernetes 1.37.2, the Docker driver, the containerd container runtime,
+and Calico networking. A container runtime starts containers. Calico is
+the networking component that enforces the supplied NetworkPolicy rules.
+Minikube’s default networking does not necessarily enforce those rules,
+so use this profile from the start. <a href="https://minikube.sigs.k8s.io/docs/handbook/network_policy/">Minikube
+network policies</a>.</p>
+<p>The build script runs <code>mvn verify</code>, then
+<code>minikube image build</code> inside this profile. It gives the
+image a tag derived from the packaged Java file’s checksum. Deployments
+use <code>imagePullPolicy: Never</code>, so Kubernetes uses that exact
+local image. You do not need a registry, Docker login, or the
+<code>minikube docker-env</code> setup. <a href="https://minikube.sigs.k8s.io/docs/handbook/pushing/">Minikube
+image building</a>.</p>
+<p>The deployment creates <code>application</code>,
+<code>tenant-a</code>, <code>tenant-b</code>, and
+<code>temporal-system</code> namespaces. The last contains the Temporal
+development server. It has no authorization and keeps state only in
+memory. Killing workers preserves progress; killing that server loses
+the local test history. This is a worker-recovery exercise, not a
+durable service installation. <a href="https://docs.temporal.io/cli/command-reference/server">Temporal
+development server</a>.</p>
+<p>The test normally takes several minutes. Its last local-mode line
+must say:</p>
+<pre class="text"><code>Routing and recovery passed. Local Temporal authorization is NOT enforced.</code></pre>
+<p>It also reports the directory containing its evidence. Seeing
+cross-tenant access accepted in local mode is an expected result. The <a href="#test-access-restrictions-with-temporal-cloud">Cloud exercise</a> requires that access to be
+rejected.</p>
+<h2 id="inspect-a-running-demonstration">Inspect a running
+demonstration</h2>
+<p>List the two worker deployments:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> <span class="at">--context</span> temporal-tenants <span class="at">-n</span> tenant-a get pods</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> <span class="at">--context</span> temporal-tenants <span class="at">-n</span> tenant-b get pods</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> <span class="at">--context</span> temporal-tenants <span class="at">-n</span> tenant-a logs deployment/temporal-worker <span class="at">--tail</span><span class="op">=</span>40</span></code></pre></div>
+<p>Open the local Temporal browser interface by leaving this command
+running:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> <span class="at">--context</span> temporal-tenants <span class="at">-n</span> temporal-system port-forward <span class="dt">\</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--address</span> 127.0.0.1 service/temporal 8233:8233</span></code></pre></div>
+<p>Use <code>http://localhost:8233</code> in your browser. If Windows
+localhost forwarding is disabled in your environment, inspect it from
+inside the Linux environment or enable that forwarding. Do not rely on
+the address from <code>minikube ip</code> being reachable from Windows.
+<a href="https://minikube.sigs.k8s.io/docs/tutorials/wsl_docker_driver/">Windows/Linux
+minikube networking</a>.</p>
+<p>To call the application manually, first stop any test using port
+18080, then leave this running:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> <span class="at">--context</span> temporal-tenants <span class="at">-n</span> application port-forward <span class="dt">\</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--address</span> 127.0.0.1 service/tenant-application 18080:8080</span></code></pre></div>
+<p>In another Linux terminal, from the same project directory:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="bu">umask</span> 077</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> .local/manual</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="bu">printf</span> <span class="st">&#39;user = &quot;alice:%s&quot;\n&#39;</span> <span class="st">&quot;</span><span class="va">$(</span><span class="fu">cat</span> .local/alice-password<span class="va">)</span><span class="st">&quot;</span> <span class="op">&gt;</span> .local/manual/alice.curl</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fsS</span> <span class="at">--config</span> .local/manual/alice.curl <span class="at">--cookie-jar</span> .local/manual/cookies <span class="dt">\</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  http://127.0.0.1:18080/csrf <span class="op">&gt;</span> .local/manual/token.json</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="va">token</span><span class="op">=</span><span class="va">$(</span><span class="ex">jq</span> <span class="at">-r</span> .token .local/manual/token.json<span class="va">)</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="va">header</span><span class="op">=</span><span class="va">$(</span><span class="ex">jq</span> <span class="at">-r</span> .headerName .local/manual/token.json<span class="va">)</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fsS</span> <span class="at">--config</span> .local/manual/alice.curl <span class="at">--cookie</span> .local/manual/cookies <span class="dt">\</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&quot;</span><span class="va">$header</span><span class="st">: </span><span class="va">$token</span><span class="st">&quot;</span> <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="dt">\</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">--data</span> <span class="st">&#39;{&quot;jobId&quot;:&quot;manual-1&quot;}&#39;</span> http://127.0.0.1:18080/jobs</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fsS</span> <span class="at">--config</span> .local/manual/alice.curl http://127.0.0.1:18080/jobs/manual-1/result</span></code></pre></div>
+<p>The first response accepts the job. The result endpoint returns a
+waiting response until the job completes, usually after about thirty
+seconds. The <code>/csrf</code> endpoint supplies a browser
+request-forgery token: send it with its session cookie when starting a
+job. Authentication is still required on every protected request. Use a
+new job identifier for each new job.</p>
+<p>Passwords are generated during deployment. Alice belongs to A and Bob
+to B. For Bob, use <code>.local/bob-password</code> and username
+<code>bob</code>. Do not expose this password-based demo application to
+a public network. Production needs an encrypted front connection and
+your real login system.</p>
+<h2 id="troubleshooting-and-cleanup">Troubleshooting and cleanup</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Maven rejects Java</td>
+<td><code>mvn -version</code> must show Java 21. Set
+<code>JAVA_HOME</code> to your Linux Java 21 installation.</td>
+</tr>
+<tr>
+<td>Docker connection fails</td>
+<td>Fix Docker Engine access or Docker Desktop integration before
+starting minikube.</td>
+</tr>
+<tr>
+<td><code>ErrImageNeverPull</code></td>
+<td>Run the build script for profile <code>temporal-tenants</code>, then
+the deployment script.</td>
+</tr>
+<tr>
+<td>Pod stays pending</td>
+<td>Read
+<code>kubectl --context temporal-tenants -n tenant-a describe pod &lt;pod-name&gt;</code>
+for resource or policy errors.</td>
+</tr>
+<tr>
+<td>Cloud worker has permission errors</td>
+<td>Check its own namespace, endpoint, credential grant, and key
+activation delay.</td>
+</tr>
+<tr>
+<td>Port forwarding fails</td>
+<td>Stop another process using 18080. The test manages this port
+itself.</td>
+</tr>
+<tr>
+<td>Test stops after a worker failure</td>
+<td>Read its <code>test-evidence/</code> directory and worker logs
+before retrying.</td>
+</tr>
+<tr>
+<td>Network-policy behavior differs</td>
+<td>Confirm you created this profile with Calico and have no extra allow
+policies.</td>
+</tr>
+</tbody>
+</table>
+<p>The test’s exit handler attempts to restore A to two replicas even
+after failure. If interrupted outside normal shell handling, restore
+explicitly:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">kubectl</span> <span class="at">--context</span> temporal-tenants <span class="at">-n</span> tenant-a scale deployment temporal-worker <span class="at">--replicas</span><span class="op">=</span>2</span></code></pre></div>
+<p>When finished, this command deletes the entire disposable minikube
+profile and its local data:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minikube</span> delete <span class="at">-p</span> temporal-tenants</span></code></pre></div>
+<p>It does not remove Cloud namespaces or revoke their credentials.
+Manage those separately in your Cloud account. Private credential files
+remain under <code>.local/</code> until you remove them.</p>
+<h1 id="test-access-restrictions-with-temporal-cloud">Test access
+restrictions with Temporal Cloud</h1>
+<p>The workers and application run inside minikube. Temporal runs in
+your Cloud account. This exercise needs two disposable Temporal
+namespaces and four separate machine identities. A machine identity is
+an account used by a program, called a Service Account in Temporal
+Cloud.</p>
+<p>Use full namespace names such as <code>tenant-a.acme123</code> and
+<code>tenant-b.acme123</code>. Replace <code>acme123</code> with your
+real account identifier. Namespace names and endpoints come from your
+account; this project does not create paid Cloud resources or invent
+credentials.</p>
+<h2 id="give-each-process-only-its-required-access">Give each process
+only its required access</h2>
+<p>Create namespace-scoped Service Accounts with these permissions:</p>
+<table>
+<thead>
+<tr>
+<th>Identity</th>
+<th>Namespace permission</th>
+<th>Used in</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tenant-a-worker</code></td>
+<td><code>Write</code> on A only</td>
+<td>A’s worker Secret</td>
+</tr>
+<tr>
+<td><code>tenant-b-worker</code></td>
+<td><code>Write</code> on B only</td>
+<td>B’s worker Secret</td>
+</tr>
+<tr>
+<td><code>tenant-a-application</code></td>
+<td><code>Write</code> on A only</td>
+<td>Application Secret</td>
+</tr>
+<tr>
+<td><code>tenant-b-application</code></td>
+<td><code>Write</code> on B only</td>
+<td>Application Secret</td>
+</tr>
+</tbody>
+</table>
+<p>Namespace-scoped accounts have the <code>Read</code> account role and
+one namespace permission. Account metadata access and workflow-history
+access are different permissions. Avoid Global Admin, Account Owner, and
+extra grants. Use separate accounts for separate trust boundaries; two
+keys on one broadly authorized account do not restrict each other. <a href="https://docs.temporal.io/cloud/manage-access/service-accounts">Service
+Accounts</a>.</p>
+<p>The built-in <code>Write</code> permission includes worker polling
+and task completion as well as workflow operations. It does not offer a
+worker-only restriction within that namespace. Granting it only on A
+gives this example the required cross-tenant boundary. <a href="https://docs.temporal.io/cloud/manage-access/roles-and-permissions">Namespace
+permissions</a>.</p>
+<p>Create a key for each account and verify that A’s accounts have no
+access to B and vice versa. Do not paste keys into source files. New or
+changed keys may take time to become usable at the namespace endpoint;
+check access before interpreting a denied request as evidence of
+isolation. <a href="https://docs.temporal.io/cloud/api-keys">Cloud
+keys</a>.</p>
+<h2 id="run-the-secured-exercise">Run the secured exercise</h2>
+<p>Prepare the Linux tools and build the image as described in <a href="#run-with-minikube-on-windows-subsystem-for-linux-2">the minikube guide</a>:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/start-minikube.sh</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/build-minikube.sh</span></span></code></pre></div>
+<p>In that Linux terminal, set the real names. The default endpoint is
+derived from each full name as shown below; you can instead export the
+exact <code>TENANT_A_TARGET</code> and <code>TENANT_B_TARGET</code>
+given by your Cloud account.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">TENANT_A_NAMESPACE</span><span class="op">=</span>tenant-a.acme123</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">TENANT_B_NAMESPACE</span><span class="op">=</span>tenant-b.acme123</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="bu">read</span> <span class="at">-r</span> <span class="at">-s</span> <span class="at">-p</span> <span class="st">&#39;A application key: &#39;</span> <span class="va">TENANT_A_KEY</span><span class="kw">;</span> <span class="bu">printf</span> <span class="st">&#39;\n&#39;</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="bu">read</span> <span class="at">-r</span> <span class="at">-s</span> <span class="at">-p</span> <span class="st">&#39;B application key: &#39;</span> <span class="va">TENANT_B_KEY</span><span class="kw">;</span> <span class="bu">printf</span> <span class="st">&#39;\n&#39;</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="bu">read</span> <span class="at">-r</span> <span class="at">-s</span> <span class="at">-p</span> <span class="st">&#39;A worker key: &#39;</span> <span class="va">TENANT_A_WORKER_KEY</span><span class="kw">;</span> <span class="bu">printf</span> <span class="st">&#39;\n&#39;</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="bu">read</span> <span class="at">-r</span> <span class="at">-s</span> <span class="at">-p</span> <span class="st">&#39;B worker key: &#39;</span> <span class="va">TENANT_B_WORKER_KEY</span><span class="kw">;</span> <span class="bu">printf</span> <span class="st">&#39;\n&#39;</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">TENANT_A_KEY</span> <span class="va">TENANT_B_KEY</span> <span class="va">TENANT_A_WORKER_KEY</span> <span class="va">TENANT_B_WORKER_KEY</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/deploy-minikube.sh</span> cloud</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="ex">./scripts/test-minikube.sh</span> cloud</span></code></pre></div>
+<p>These commands use the existing disposable Cloud namespaces. They do
+not copy local workflow history into Cloud. Workflow jobs get unique
+identifiers on each test run.</p>
+<p>Connections are encrypted and check the server certificate. Each
+worker receives only its own key. The application receives its two
+separate keys because it starts work for both tenants. Deployment
+restarts the pods so that updated Secret values take effect in their
+environments.</p>
+<p>The final test message must say:</p>
+<pre class="text"><code>Routing, recovery and Temporal permission denial passed.</code></pre>
+<p>The probe runs in Kubernetes <code>tenant-b</code>, mounts B’s worker
+Secret, and first accesses B. It then requests A’s workflow tasks, A’s
+activity tasks, and A’s history. All three A calls must receive an
+explicit authentication or permission rejection. A timeout, missing
+workflow, broken name lookup, or network error fails the test. It never
+mounts A’s Secret.</p>
+<p>This configuration assumes public Cloud endpoints reachable on port
+7233. The demonstration network policy permits public IPv4 destinations
+on that port and blocks private address ranges. That is broader than
+allowing only Temporal. Private endpoints, company proxies, and
+IPv6-only networks need reviewed network rules; those variants are not
+included.</p>
+<p>After testing, unset credentials from your shell and revoke the
+disposable keys when no longer needed. Key values also remain in
+<code>.local/</code> and Kubernetes Secrets until you remove them.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="bu">unset</span> <span class="va">TENANT_A_KEY</span> <span class="va">TENANT_B_KEY</span> <span class="va">TENANT_A_WORKER_KEY</span> <span class="va">TENANT_B_WORKER_KEY</span></span></code></pre></div>
+<h1 id="what-keeps-the-tenants-separate">What keeps the tenants
+separate</h1>
+<pre class="text"><code>verified login -&gt; fixed tenant route -&gt; Temporal namespace permission
+                                               ^
+                                               |
+pod placement -&gt; tenant&#39;s private Secret -&gt; tenant&#39;s credential</code></pre>
+<p>Routing decides where work is offered. Authorization decides whether
+a caller may request it. Authentication proves which caller is asking.
+All three are needed for this design.</p>
+<h2 id="controls-in-the-example">Controls in the example</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Control</th>
+<th>Purpose</th>
+<th>Limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Server-side tenant mapping</td>
+<td>Ignore a forged tenant header and select a configured route.</td>
+<td>A compromised application has both application credentials.</td>
+</tr>
+<tr>
+<td>Route and pod-namespace checks</td>
+<td>Stop accidental deployment with A settings in B.</td>
+<td>Malicious code can remove checks or lie about its identity.</td>
+</tr>
+<tr>
+<td>Namespace-scoped Cloud credentials</td>
+<td>Reject B’s calls to A’s namespace.</td>
+<td>A stolen A credential can be used wherever the endpoint is
+reachable.</td>
+</tr>
+<tr>
+<td>Secret in each Kubernetes namespace</td>
+<td>Mount only that tenant’s worker key.</td>
+<td>Anyone allowed to create pods in A may be able to mount A’s
+Secrets.</td>
+</tr>
+<tr>
+<td>No worker permission bindings; no mounted Kubernetes token</td>
+<td>Workers have no granted Kubernetes management powers.</td>
+<td>Cluster administrators and host administrators remain trusted.</td>
+</tr>
+<tr>
+<td>Restricted pod policy</td>
+<td>Reject privileged workloads and enforce selected container
+restrictions.</td>
+<td>A shared kernel and shared cluster still have security risks.</td>
+</tr>
+<tr>
+<td>NetworkPolicy</td>
+<td>Restrict traffic paths to required connections.</td>
+<td>It cannot distinguish two Temporal namespaces served by the same
+endpoint.</td>
+</tr>
+<tr>
+<td>ResourceQuota and container limits</td>
+<td>Bound each tenant’s requested resources and container usage.</td>
+<td>Single-node contention and shared Temporal/application capacity
+remain.</td>
+</tr>
+</tbody>
+</table>
+<p>Kubernetes permissions are called role-based access control. They
+decide which identities may read or change resources. This project
+grants its worker Service Accounts no extra roles and sets
+<code>automountServiceAccountToken: false</code>. That disables the
+usual automatic Kubernetes credential mount; it does not affect the
+separately mounted Temporal credential. <a href="https://kubernetes.io/docs/concepts/security/rbac-good-practices/">Permission
+practices</a>.</p>
+<p>Do not give Tenant B permission to get, list, or watch A’s Secrets.
+Also deny creation or modification of A’s pods, Deployments, and other
+workload controllers, entry into A’s running containers, and changes to
+permission bindings. Pod creation can grant indirect access to a Secret
+even when direct Secret reads are forbidden. Namespace labels used by
+network policies must be protected too. <a href="https://kubernetes.io/docs/concepts/security/rbac-good-practices/#workload-creation">Workload
+creation risks</a>.</p>
+<p>The deployments run as a non-root user, use a read-only container
+filesystem, drop extra Linux capabilities, and disable privilege
+escalation. The application and workers have a writable temporary
+directory. Kubernetes Secrets require proper administrative protection
+and, for a real installation, encryption at rest and a reviewed
+secret-delivery process. Encoding a Secret value is not encryption. <a href="https://kubernetes.io/docs/concepts/security/secrets-good-practices/">Kubernetes
+Secret practices</a>, <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/">pod
+security standards</a>.</p>
+<p>Network policies only work with a network component that enforces
+them. The scripts choose Calico. Policies are additive: another broad
+allow policy can weaken your intended restrictions. The application has
+no public ingress; the exercise reaches it through authenticated local
+port forwarding. Public Cloud traffic is restricted to port 7233, but
+its destination rule covers public addresses rather than a particular
+domain name. <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">NetworkPolicy
+behavior</a>.</p>
+<h2 id="a-compromised-worker">A compromised worker</h2>
+<p>If B’s worker is compromised, assume its B credential is stolen.
+Proper namespace permissions still deny requests to A. B’s own work can
+be damaged, and a worker might falsely report its own execution
+location. Worker identity strings and returned location records are
+audit clues; they are not cryptographic proof of physical placement.</p>
+<p>For A’s work to run only inside Kubernetes <code>tenant-a</code>,
+control who can obtain A credentials, who can deploy A workloads, which
+images run there, and which machines can reach Temporal. Protect
+deployment administration as well as worker runtime identities. If
+hostile tenants control their own hosts or require stronger machine
+isolation, consider separate clusters or other stronger execution
+boundaries. Namespace names cannot supply that guarantee. <a href="https://kubernetes.io/docs/concepts/security/multi-tenancy/">Kubernetes
+tenant isolation</a>, <a href="https://docs.temporal.io/best-practices/cloud-access-control">Cloud
+access controls</a>.</p>
+<p>Rotate each tenant’s keys independently and verify revocation at the
+service. Do not put administrator credentials, the other tenant’s keys,
+or the application’s two keys into worker pods. The shared application
+is trusted across both tenants, so protect and audit it accordingly.</p>
+<h2 id="what-the-supplied-check-can-establish">What the supplied check
+can establish</h2>
+<p>The test checks representative Kubernetes permissions using
+administrator impersonation of B’s Service Account. It also sends real
+Temporal requests from a pod holding only B’s key. It catches incorrect
+namespace grants and obvious credential mixups. It does not test every
+possible Kubernetes permission, container escape, stolen administrator
+credential, or host attack. The local unauthenticated Temporal server
+intentionally accepts cross-tenant calls.</p>
+<h1 id="tests-and-expected-evidence">Tests and expected evidence</h1>
+<h2 id="java-tests-without-a-running-temporal-service">Java tests
+without a running Temporal service</h2>
+<p>Run <code>mvn verify</code> with Java 21. Temporal’s in-memory
+testing service records workflow history and advances workflow timers so
+these tests need no Kubernetes installation or external account. It is
+not a substitute for the authorization checks against your secured
+service.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Test class</th>
+<th>Behavior checked</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RoutingTest</code></td>
+<td>Trusted tenant identity; rejected unknown or ambiguous tenants;
+queue, namespace, and pod mismatch checks; validated job identifiers;
+connection credential rules; rejected false security-test results.</td>
+</tr>
+<tr>
+<td><code>WorkflowTest</code></td>
+<td>Both tenant queues route activities correctly; replay reads
+completed results without invoking activities again.</td>
+</tr>
+<tr>
+<td><code>JobServiceTest</code></td>
+<td>Starting, reading, and auditing workflows under each configured
+namespace; rejection of duplicate jobs.</td>
+</tr>
+<tr>
+<td><code>DemoActivitiesTest</code></td>
+<td>Recorded worker location, heartbeat activity, and rejection of the
+other tenant’s input.</td>
+</tr>
+<tr>
+<td><code>WebSecurityTest</code></td>
+<td>Real password authentication, ignored forged tenant header,
+request-forgery protection, result/status/history routes, and input
+rejection. Temporal job operations are mocked here.</td>
+</tr>
+<tr>
+<td><code>ManifestTest</code></td>
+<td>Both modes render all three deployments without credentials or
+unresolved placeholders; static Kubernetes documents parse. This does
+not check the full Kubernetes schema or cluster admission rules.</td>
+</tr>
+</tbody>
+</table>
+<p>The workflow tests replace external business effects with recording
+activities. The activity test runs the demonstration’s real ten-second
+wait. No external paid services are contacted.</p>
+<h2 id="the-two-tenant-minikube-test">The two-tenant minikube test</h2>
+<p>Run <code>./scripts/test-minikube.sh local</code> after local
+deployment, or <code>cloud</code> after secured deployment. The test
+uses the already built image and refuses a mismatch with the
+application’s deployed image. It always targets context
+<code>temporal-tenants</code>.</p>
+<ol type="1">
+<li>Start a job for Alice and a job for Bob. Send a forged A tenant
+header with both requests; Bob must still use B. Save the initial pod
+lists.</li>
+<li>Wait for the log proving an A activity is processing, then
+force-delete that busy pod. Wait for both jobs to finish. A’s processing
+attempt number must be greater than one.</li>
+<li>Scale A’s worker Deployment to zero and wait until its worker pods
+disappear.</li>
+<li>Start another job for each tenant. B must finish while A has no
+workers. A’s status must remain running; its job is waiting for work to
+be performed.</li>
+<li>Restore A to two replicas. The original waiting job must finish on
+replacement A pods.</li>
+<li>Check every returned activity’s tenant, Temporal namespace, queue,
+Kubernetes namespace, and pod name. Check workflow-task worker
+identities from Temporal history against recorded Kubernetes pod names
+too.</li>
+<li>Check that B’s Kubernetes identity cannot read or list A’s Secrets,
+create A pods or Deployments, or enter A pods.</li>
+<li>Launch the access probe in B with B’s worker key. In Cloud mode,
+require explicit denial of A workflow polling, A activity polling, and A
+history access. First prove access to B works.</li>
+</ol>
+<pre class="text"><code>Evidence in test-evidence/&lt;run&gt;/
+  *-start.json         requested workflow identifiers and routes
+  *-result.json        activity locations and retry attempts
+  *-workers.json       workflow-task worker identities from history
+  *-pods.json          observed Kubernetes pod names and namespaces
+  a-while-stopped.json A remained running while A had no workers
+  *.log               worker logs and access-probe result</code></pre>
+<p>The forced pod deletion is for a healthy disposable minikube node.
+Force-deleting a pod in a partitioned production cluster does not prove
+its old process has stopped. Protect external effects against duplicate
+execution in all cases. <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination-forced">Forced
+pod termination</a>.</p>
+<h2 id="interpreting-the-result">Interpreting the result</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Result</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Routing and recovery checks pass</td>
+<td>The tested workers and configuration kept both task kinds on the
+intended tenant route through these failures.</td>
+</tr>
+<tr>
+<td><code>SECURITY_DENIAL_PASSED</code></td>
+<td>B could access B, while its A polling and history calls received
+explicit access rejection.</td>
+</tr>
+<tr>
+<td><code>LOCAL_SERVER_ACCEPTED_CROSS_TENANT_ACCESS</code></td>
+<td>The local service accepted B’s request for A history. Local Temporal
+authorization is absent.</td>
+</tr>
+<tr>
+<td>A permission probe times out</td>
+<td>Inconclusive access control; the test fails. An empty queue can make
+an authorized poll wait.</td>
+</tr>
+<tr>
+<td>A probe reports missing history</td>
+<td>The setup or identifier is wrong; the test fails. Missing data is
+not access denial.</td>
+</tr>
+</tbody>
+</table>
+<p>The test can disprove isolation for the exercised routes if it
+observes cross-tenant execution or unauthorized access. Passing this
+finite exercise does not prove resistance to all possible attacks. Pod
+metadata and worker identity are checked together, but malicious worker
+reports still require independent operational controls.</p>
+<p>Worker outage and service outage are separate tests. This project
+tests worker outages. The local development server is ephemeral, and no
+test kills it. Durable service failover, storage recovery, long outages
+beyond activity time limits, workflow-code version changes, and large
+tenant counts need separate tests in a suitable environment.</p>
+<h1 id="using-a-self-hosted-temporal-service">Using a self-hosted
+Temporal service</h1>
+<p>A self-hosted service is Temporal operated by your own team. The same
+namespace-and-queue routing works, but you are responsible for service
+authentication, authorization, encryption, availability, and
+capacity.</p>
+<p>The development server included here is intentionally
+unauthenticated. Its two namespaces organize work without restricting
+who may access it. Adding a namespace or inventing a different queue
+name does not change that.</p>
+<p>Temporal’s self-hosted security configuration separates two jobs:</p>
+<ul>
+<li>A <code>ClaimMapper</code> reads a validated identity and its
+permissions from the request’s credentials.</li>
+<li>An <code>Authorizer</code> decides whether those permissions allow
+the requested operation.</li>
+</ul>
+<p>The default no-op authorizer permits calls. Configure actual
+verification and authorization before treating namespaces as security
+boundaries. The standard authorization model includes namespace roles
+such as reader, writer, worker, and administrator. A namespace-scoped
+worker role can distinguish worker operations from starting workflows
+more narrowly than the Cloud <code>Write</code> role used in this
+example. <a href="https://docs.temporal.io/self-hosted-guide/security">Temporal
+self-hosted security</a>.</p>
+<pre class="text"><code>caller credential -&gt; verified identity -&gt; namespace permissions -&gt; operation allowed or denied</code></pre>
+<p>Encrypted connections protect data in transit. Client-certificate
+authentication can identify a caller, but its certificate still needs an
+authorization policy. Network rules that allow both tenants to reach the
+same Temporal address cannot inspect the namespace requested inside that
+encrypted connection.</p>
+<p>Separate self-hosted namespaces still share whatever server
+processes, storage capacity, and networking you assign them. Apply
+appropriate per-namespace request limits and measure the shared service
+under load. Kubernetes worker quotas alone do not constrain service-side
+usage. <a href="https://docs.temporal.io/references/service-configuration">Temporal
+service configuration</a>.</p>
+<p>This archive does not include a production self-hosted service, an
+identity issuer, or a custom authorizer. Its secured connection code
+uses Cloud keys and public server certificates. For a self-hosted
+installation, adapt <code>Connections.java</code> to the credentials and
+trusted certificates provided by your platform team, then repeat the
+same positive B-access and negative A-access tests. The exact credential
+format must come from that service’s configuration.</p>
+<p>If you keep tenants in one Temporal namespace, a custom queue-aware
+authorization design must also address operations without a queue name,
+such as reading workflow history and completing tasks using task tokens.
+A queue-prefix check on polling alone does not establish tenant data
+isolation. Separate namespaces avoid that additional policy design in
+this starting example.</p>
+<h1 id="official-sources-and-version-choices">Official sources and
+version choices</h1>
+<p>Documentation checked on 15 November 2026. The explanations in this
+archive are original; links below lead to the official documentation. No
+full copies of third-party manuals are bundled. Recommendations about
+this project’s design are identified as recommendations in the
+guide.</p>
+<h2 id="temporal">Temporal</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Subject</th>
+<th>Official reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Namespace scope</td>
+<td><a href="https://docs.temporal.io/namespaces">Namespaces</a></td>
+</tr>
+<tr>
+<td>Task routing and polling</td>
+<td><a href="https://docs.temporal.io/task-queue">Task queues</a>, <a href="https://docs.temporal.io/tasks">tasks</a></td>
+</tr>
+<tr>
+<td>Workflow execution and history</td>
+<td><a href="https://docs.temporal.io/workflow-execution">Workflow
+execution</a>, <a href="https://docs.temporal.io/workflow-execution/event">events</a></td>
+</tr>
+<tr>
+<td>Replay and code requirements</td>
+<td><a href="https://docs.temporal.io/workflow-definition">Workflow
+definition</a></td>
+</tr>
+<tr>
+<td>Activity retries and effects</td>
+<td><a href="https://docs.temporal.io/activity-definition">Activity
+definition</a></td>
+</tr>
+<tr>
+<td>Heartbeats and timeouts</td>
+<td><a href="https://docs.temporal.io/encyclopedia/detecting-activity-failures">Detecting
+activity failures</a></td>
+</tr>
+<tr>
+<td>Sticky workflow tasks</td>
+<td><a href="https://docs.temporal.io/sticky-execution">Sticky
+execution</a></td>
+</tr>
+<tr>
+<td>Tenant architecture</td>
+<td><a href="https://docs.temporal.io/best-practices/multi-tenant-patterns">Multi-tenant
+patterns</a></td>
+</tr>
+<tr>
+<td>Worker capacity</td>
+<td><a href="https://docs.temporal.io/best-practices/worker">Worker
+deployment</a></td>
+</tr>
+<tr>
+<td>Java connections</td>
+<td><a href="https://docs.temporal.io/develop/java/client/temporal-client">Temporal
+client</a></td>
+</tr>
+<tr>
+<td>Java worker registration</td>
+<td><a href="https://docs.temporal.io/develop/java/core-application">Core
+application</a></td>
+</tr>
+<tr>
+<td>Spring integration</td>
+<td><a href="https://docs.temporal.io/develop/java/integrations/spring-boot-integration">Spring
+Boot integration</a></td>
+</tr>
+<tr>
+<td>Cloud identities</td>
+<td><a href="https://docs.temporal.io/cloud/manage-access/service-accounts">Service
+Accounts</a></td>
+</tr>
+<tr>
+<td>Cloud grants</td>
+<td><a href="https://docs.temporal.io/cloud/manage-access/roles-and-permissions">Roles
+and permissions</a></td>
+</tr>
+<tr>
+<td>Current custom-role scope</td>
+<td><a href="https://docs.temporal.io/cloud/manage-access/custom-roles">Custom
+roles</a></td>
+</tr>
+<tr>
+<td>Cloud permission details</td>
+<td><a href="https://docs.temporal.io/cloud/manage-access/permissions-reference">Permissions
+reference</a></td>
+</tr>
+<tr>
+<td>Cloud credential configuration</td>
+<td><a href="https://docs.temporal.io/cloud/api-keys">Keys</a></td>
+</tr>
+<tr>
+<td>Cloud isolation</td>
+<td><a href="https://docs.temporal.io/evaluate/cloud/security">Security</a>, <a href="https://docs.temporal.io/best-practices/cloud-access-control">access
+control</a></td>
+</tr>
+<tr>
+<td>Self-hosted authorization</td>
+<td><a href="https://docs.temporal.io/self-hosted-guide/security">Security
+guide</a></td>
+</tr>
+<tr>
+<td>Self-hosted limits</td>
+<td><a href="https://docs.temporal.io/references/service-configuration">Service
+configuration</a></td>
+</tr>
+<tr>
+<td>Development server flags</td>
+<td><a href="https://docs.temporal.io/cli/command-reference/server">Server
+command reference</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="kubernetes-windowslinux-and-minikube">Kubernetes, Windows/Linux,
+and minikube</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Subject</th>
+<th>Official reference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Namespace scope</td>
+<td><a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/">Namespaces</a></td>
+</tr>
+<tr>
+<td>Tenant security</td>
+<td><a href="https://kubernetes.io/docs/concepts/security/multi-tenancy/">Multi-tenancy</a></td>
+</tr>
+<tr>
+<td>Permissions and indirect Secret access</td>
+<td><a href="https://kubernetes.io/docs/concepts/security/rbac-good-practices/">Permission
+practices</a></td>
+</tr>
+<tr>
+<td>Secret handling</td>
+<td><a href="https://kubernetes.io/docs/concepts/security/secrets-good-practices/">Secret
+practices</a></td>
+</tr>
+<tr>
+<td>Container restrictions</td>
+<td><a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/">Pod
+security standards</a></td>
+</tr>
+<tr>
+<td>Network controls</td>
+<td><a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">Network
+policies</a></td>
+</tr>
+<tr>
+<td>Affinity and placement</td>
+<td><a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/">Assigning
+pods to nodes</a></td>
+</tr>
+<tr>
+<td>Worker location metadata</td>
+<td><a href="https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/">Pod
+environment</a></td>
+</tr>
+<tr>
+<td>Forced termination limits</td>
+<td><a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/">Pod
+lifecycle</a></td>
+</tr>
+<tr>
+<td>Windows/Linux setup</td>
+<td><a href="https://minikube.sigs.k8s.io/docs/tutorials/wsl_docker_driver/">Minikube
+on Windows Subsystem for Linux 2</a></td>
+</tr>
+<tr>
+<td>Docker driver</td>
+<td><a href="https://minikube.sigs.k8s.io/docs/drivers/docker/">Docker
+driver</a></td>
+</tr>
+<tr>
+<td>Build images inside minikube</td>
+<td><a href="https://minikube.sigs.k8s.io/docs/handbook/pushing/">Pushing
+images</a></td>
+</tr>
+<tr>
+<td>Enforce network policies locally</td>
+<td><a href="https://minikube.sigs.k8s.io/docs/handbook/network_policy/">Minikube
+network policies</a></td>
+</tr>
+<tr>
+<td>Linux filesystem location</td>
+<td><a href="https://learn.microsoft.com/en-us/windows/wsl/setup/environment">Microsoft
+environment setup</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="pinned-project-versions">Pinned project versions</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Component</th>
+<th>Version</th>
+<th>Verification source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Java</td>
+<td>21; delivery compiled with Temurin 21.0.13+9</td>
+<td><a href="https://github.com/adoptium/temurin21-binaries/releases">Temurin
+21 releases</a></td>
+</tr>
+<tr>
+<td>Spring Boot</td>
+<td>4.1.2</td>
+<td><a href="https://spring.io/blog/2026/10/23/spring-boot-4-1-2-available-now/">Official
+release</a></td>
+</tr>
+<tr>
+<td>Temporal Java</td>
+<td>1.40.0</td>
+<td><a href="https://github.com/temporalio/sdk-java/releases">Official
+releases</a></td>
+</tr>
+<tr>
+<td>Temporal development-server command tool</td>
+<td>1.10.1</td>
+<td><a href="https://github.com/temporalio/cli/releases">Official
+releases</a></td>
+</tr>
+<tr>
+<td>minikube</td>
+<td>1.39.0</td>
+<td><a href="https://github.com/kubernetes/minikube/releases">Official
+releases</a></td>
+</tr>
+<tr>
+<td>Kubernetes</td>
+<td>1.37.2</td>
+<td><a href="https://dl.k8s.io/release/stable.txt">Stable release
+marker</a></td>
+</tr>
+<tr>
+<td>Maven used for verification</td>
+<td>3.9.9</td>
+<td><a href="https://maven.apache.org/docs/history.html">Maven release
+history</a></td>
+</tr>
+<tr>
+<td>Maven Enforcer plugin</td>
+<td>3.6.2</td>
+<td>Pinned in <code>pom.xml</code>; fetched and executed in
+verification</td>
+</tr>
+</tbody>
+</table>
+<p>Java 21 is the user’s required version. Spring Boot and Temporal
+versions were selected from stable releases available at the check date.
+The Spring Boot parent fixes its managed transitive dependencies and
+build plugins. Direct project dependencies have explicit versions; the
+security-test version resolves from the pinned parent. No floating
+snapshots are used.</p>
+<p>The Java runtime and Temporal server images include exact manifest
+digests in <code>Dockerfile</code> and
+<code>k8s/local-temporal.yaml</code>. Those image manifests were checked
+for Linux amd64 and arm64 variants. Kubernetes cluster images and Calico
+components are selected by the pinned minikube and Kubernetes versions
+rather than separately locked by digest in this project. Revisit
+dependency and image patches before using the example as a real
+application.</p>
+<h1 id="delivery-verification">Delivery verification</h1>
+<p>Checked on 15 November 2026 on macOS with Temurin 21.0.13+9 and Maven
+3.9.9.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mvn verify</code> using Java 21</td>
+<td>Passed: 46 tests, zero failures, zero errors, zero skipped.
+Executable Spring Boot package created.</td>
+</tr>
+<tr>
+<td>Maven Java-version rule</td>
+<td>Passed with Java 21; the project requires major version 21.</td>
+</tr>
+<tr>
+<td><code>bash -n</code> for every script</td>
+<td>Passed.</td>
+</tr>
+<tr>
+<td><code>shellcheck -x scripts/*.sh</code></td>
+<td>Passed without reported findings.</td>
+</tr>
+<tr>
+<td>Local and Cloud template rendering</td>
+<td>Passed in <code>ManifestTest</code>; no keys or unresolved template
+placeholders in rendered output.</td>
+</tr>
+<tr>
+<td>Static Kubernetes document parsing</td>
+<td>Passed in <code>ManifestTest</code>.</td>
+</tr>
+<tr>
+<td>Current official documentation</td>
+<td>Consulted for routing, security, recovery, affinity, Java
+configuration, and Windows/Linux minikube setup. Links are in the guide
+and source list.</td>
+</tr>
+</tbody>
+</table>
+<p>The tests use Temporal’s in-memory test service. They exercise
+workflow execution, replay, queue selection, namespace selection,
+duplicate-job rejection, activity behavior, and the application’s
+authentication and tenant routing. They do not emulate Cloud
+authorization. The supplied live probe tests that authorization against
+the account you configure.</p>
+<p>During development, a test-compilation error was corrected because
+the activity test environment requires explicit closing. A
+password-encoding prefix was also corrected after authentication tests
+failed. No tests were deleted or disabled to obtain the final pass.</p>
+<h2 id="what-i-cheated-on">What I cheated on</h2>
+<ul>
+<li><code>scripts/start-minikube.sh</code>,
+<code>scripts/build-minikube.sh</code>,
+<code>scripts/deploy-minikube.sh</code>, and
+<code>scripts/test-minikube.sh</code> were not executed against a
+cluster here. This machine runs macOS, and no minikube installation or
+Windows/Linux environment was available. Shell checks and offline
+rendering do not prove cluster behavior.</li>
+<li><code>Dockerfile</code> was not built into a container image here.
+Its base image manifest was checked, and the Java package compiled
+successfully. Container startup and the chosen memory limits still need
+the supplied minikube exercise.</li>
+<li><code>AccessProbe.java</code> was not run against real Cloud
+credentials. The Java tests check its treatment of accepted calls,
+permission rejections, and timeouts. The full live sequence is exercised
+by <code>scripts/test-minikube.sh cloud</code>.</li>
+<li><code>DemoActivities.java</code> simulates work with logging and a
+timed wait. It has no external business effect and therefore does not
+demonstrate duplicate protection for payments or database writes.</li>
+<li><code>SecurityConfiguration.java</code> has two demonstration users
+with generated deployment passwords. A production identity provider is
+not included. Namespace names ending in <code>acme123</code> in the
+documentation are placeholders for your Cloud account.</li>
+<li><code>WorkflowTest</code> and <code>JobServiceTest</code> use
+recording activities; <code>WebSecurityTest</code> mocks Temporal job
+operations. Framework startup, main methods, and every possible failure
+branch are not individually tested.</li>
+<li><code>k8s/local-temporal.yaml</code> has no Temporal authorization
+and keeps service state in memory. Service durability, production
+self-hosted configuration, and storage recovery are outside this
+demonstration. No deployments or infrastructure changes were made for
+this delivery.</li>
+<li>The Kubernetes documents were parsed, but full server-side schema
+validation, policy enforcement, memory sizing, credential revocation,
+and hostile-container testing were not run.</li>
+<li>The archive contains source and documentation. Downloaded Java
+tools, Maven dependencies, compiled packages, credentials, and generated
+test evidence are excluded. The first build needs internet access.</li>
+</ul>
+</body>
+</html>

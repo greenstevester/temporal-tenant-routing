@@ -1,0 +1,7 @@
+/target/
+/.local/
+/test-evidence/
+*.log
+.env
+.idea/
+.DS_Store
